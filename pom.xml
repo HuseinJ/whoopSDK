@@ -12,8 +12,15 @@
     <license>
       <name>MIT License</name>
       <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
     </license>
   </licenses>
+
+  <developers>
+    <developer>
+      <name>Husein Jusic</name>
+    </developer>
+  </developers>
   <properties>
     <!--
       Deploy target. CI overrides this with -Dgithub.repository=${{ github.repository }},
@@ -60,6 +67,21 @@
     </dependency>
   </dependencies>
   <build>
+    <resources>
+      <!-- Keep the default resource root, which declaring <resources> would otherwise replace. -->
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- Ship the license inside the jar, so it travels with the artifact. -->
+      <resource>
+        <directory>${project.basedir}</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+        </includes>
+      </resource>
+    </resources>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

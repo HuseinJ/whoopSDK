@@ -34,7 +34,7 @@ Released versions are published to this repository's package registry by
 ### From source
 
 ```bash
-./mvnw install     # installs 0.1.0-SNAPSHOT into ~/.m2
+./mvnw install     # installs the current pom version into ~/.m2
 ```
 
 ## Quick start
@@ -284,8 +284,9 @@ CI runs the suite on Java 17 and 21 for every push and pull request.
 
 ## Releasing
 
-The pom stays at `-SNAPSHOT`; the published version comes from the release tag, so there is no
-version-bump commit.
+The published version comes from the release tag, not from the pom — the workflow runs
+`versions:set` before deploying. The version in `pom.xml` only affects local `./mvnw install`
+builds, so a release needs no version-bump commit.
 
 1. Draft a GitHub Release with a tag like `v0.1.0` (the leading `v` is stripped).
 2. Publishing it runs the test suite, deploys to GitHub Packages, and attaches the three jars.
@@ -305,7 +306,15 @@ property yourself:
 Conflict, so every release needs a new number. Deleting and re-pushing the same version is possible
 through the package settings UI but breaks anyone who already resolved it.
 
+## License
+
+[MIT](LICENSE) © 2026 Husein Jusic
+
 ## Notes
 
-Not affiliated with or endorsed by WHOOP. Built against API v2; the v1 endpoints are deprecated and
-only `resolveV1WorkoutId` touches them, for migrating stored v1 ids.
+Not affiliated with or endorsed by WHOOP. WHOOP is a trademark of WHOOP, Inc.; the MIT license
+above covers this client library only, not access to the API itself, which stays governed by
+WHOOP's own developer terms.
+
+Built against API v2; the v1 endpoints are deprecated and only `resolveV1WorkoutId` touches them,
+for migrating stored v1 ids.
