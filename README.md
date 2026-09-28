@@ -16,31 +16,11 @@ deals in `Recovery` and `Sleep` objects instead of HTTP.
 Released versions are published to this repository's package registry by
 [`.github/workflows/publish.yml`](.github/workflows/publish.yml).
 
-**GitHub Packages requires authentication even for public repositories.** Consuming projects need a
-[classic PAT](https://github.com/settings/tokens) with the `read:packages` scope — a fine-grained
-token will not work for the Maven registry.
-
-Put the credentials in `~/.m2/settings.xml` (never in the project pom):
-
-```xml
-<settings>
-  <servers>
-    <server>
-      <id>github</id>
-      <username>YOUR_GITHUB_USERNAME</username>
-      <password>${env.GITHUB_PACKAGES_TOKEN}</password>
-    </server>
-  </servers>
-</settings>
-```
-
-Then in the consuming project:
-
 ```xml
 <repositories>
   <repository>
     <id>github</id>
-    <url>https://maven.pkg.github.com/OWNER/whoopSDK</url>
+    <url>https://maven.pkg.github.com/HuseinJ/whoopSDK</url>
   </repository>
 </repositories>
 
@@ -50,40 +30,6 @@ Then in the consuming project:
   <version>0.1.0</version>
 </dependency>
 ```
-
-Gradle:
-
-```kotlin
-repositories {
-    maven {
-        url = uri("https://maven.pkg.github.com/OWNER/whoopSDK")
-        credentials {
-            username = providers.gradleProperty("gpr.user").orNull ?: System.getenv("GITHUB_ACTOR")
-            password = providers.gradleProperty("gpr.token").orNull ?: System.getenv("GITHUB_PACKAGES_TOKEN")
-        }
-    }
-}
-
-dependencies {
-    implementation("com.whoopsdk:whoop-java-sdk:0.1.0")
-}
-```
-
-Inside a GitHub Actions job in another repo, the built-in `secrets.GITHUB_TOKEN` works instead of a
-PAT — as long as that repo is in the same org or the package is public.
-
-### Without authentication
-
-Each release also carries the three jars as downloadable assets, which need no token. Grab
-`whoop-java-sdk-<version>.jar` from the
-[Releases page](../../releases) and add it as a flat-file dependency, or install it locally:
-
-```bash
-mvn install:install-file -Dfile=whoop-java-sdk-0.1.0.jar \
-    -DgroupId=com.whoopsdk -DartifactId=whoop-java-sdk -Dversion=0.1.0 -Dpackaging=jar
-```
-
-Note this route does not resolve Jackson transitively — declare it yourself.
 
 ### From source
 
@@ -150,29 +96,29 @@ Two things to get right:
 
 ### Scopes
 
-| Scope | Constant | Unlocks |
-| --- | --- | --- |
-| `read:profile` | `READ_PROFILE` | `users().getProfile()` |
+| Scope                   | Constant                | Unlocks                        |
+| ----------------------- | ----------------------- | ------------------------------ |
+| `read:profile`          | `READ_PROFILE`          | `users().getProfile()`         |
 | `read:body_measurement` | `READ_BODY_MEASUREMENT` | `users().getBodyMeasurement()` |
-| `read:cycles` | `READ_CYCLES` | everything on `cycles()` |
-| `read:recovery` | `READ_RECOVERY` | everything on `recoveries()` |
-| `read:sleep` | `READ_SLEEP` | everything on `sleeps()` |
-| `read:workout` | `READ_WORKOUT` | everything on `workouts()` |
-| `offline` | `OFFLINE` | receiving a refresh token |
+| `read:cycles`           | `READ_CYCLES`           | everything on `cycles()`       |
+| `read:recovery`         | `READ_RECOVERY`         | everything on `recoveries()`   |
+| `read:sleep`            | `READ_SLEEP`            | everything on `sleeps()`       |
+| `read:workout`          | `READ_WORKOUT`          | everything on `workouts()`     |
+| `offline`               | `OFFLINE`               | receiving a refresh token      |
 
 A call made without its scope fails with `WhoopAuthException`.
 
 ## API surface
 
-| Accessor | Methods |
-| --- | --- |
-| `whoop.users()` | `getProfile()`, `getBodyMeasurement()`, `revokeAccess()` |
-| `whoop.cycles()` | `getCycle(id)`, `listCycles(..)`, `streamCycles(..)`, `getSleepForCycle(id)` |
-| `whoop.recoveries()` | `listRecoveries(..)`, `streamRecoveries(..)`, `getRecoveryForCycle(id)` |
-| `whoop.sleeps()` | `getSleep(uuid)`, `listSleeps(..)`, `streamSleeps(..)`, `streamNights(..)` |
-| `whoop.workouts()` | `getWorkout(uuid)`, `listWorkouts(..)`, `streamWorkouts(..)`, `resolveV1WorkoutId(id)` |
+| Accessor             | Methods                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------- |
+| `whoop.users()`      | `getProfile()`, `getBodyMeasurement()`, `revokeAccess()`                               |
+| `whoop.cycles()`     | `getCycle(id)`, `listCycles(..)`, `streamCycles(..)`, `getSleepForCycle(id)`           |
+| `whoop.recoveries()` | `listRecoveries(..)`, `streamRecoveries(..)`, `getRecoveryForCycle(id)`                |
+| `whoop.sleeps()`     | `getSleep(uuid)`, `listSleeps(..)`, `streamSleeps(..)`, `streamNights(..)`             |
+| `whoop.workouts()`   | `getWorkout(uuid)`, `listWorkouts(..)`, `streamWorkouts(..)`, `resolveV1WorkoutId(id)` |
 
-A *cycle* is WHOOP's day: it runs wake-to-wake rather than midnight-to-midnight, which is why
+A _cycle_ is WHOOP's day: it runs wake-to-wake rather than midnight-to-midnight, which is why
 recovery is keyed by `cycleId` rather than by date.
 
 ### Score state
@@ -284,12 +230,12 @@ replays. Widen or disable that window with `new WhoopWebhookVerifier(secret, tol
 
 All failures extend `WhoopException`, which is unchecked.
 
-| Exception | Raised for |
-| --- | --- |
-| `WhoopAuthException` | 401/403, failed token exchange, bad webhook signature |
-| `WhoopRateLimitException` | 429 after retries are exhausted; carries `retryAfter()` |
-| `WhoopApiException` | any other non-2xx; carries `statusCode()`, `body()`, `isNotFound()` |
-| `WhoopException` | transport failure, JSON that will not parse |
+| Exception                 | Raised for                                                          |
+| ------------------------- | ------------------------------------------------------------------- |
+| `WhoopAuthException`      | 401/403, failed token exchange, bad webhook signature               |
+| `WhoopRateLimitException` | 429 after retries are exhausted; carries `retryAfter()`             |
+| `WhoopApiException`       | any other non-2xx; carries `statusCode()`, `body()`, `isNotFound()` |
+| `WhoopException`          | transport failure, JSON that will not parse                         |
 
 ```java
 try {
